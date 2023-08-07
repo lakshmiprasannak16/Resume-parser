@@ -1,0 +1,53 @@
+# Import necessary libraries
+import nltk
+import string
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+from nltk.stem import PorterStemmer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Download stopwords and punkt tokenizer if not already downloaded
+nltk.download('stopwords')
+nltk.download('punkt')
+
+# Sample job description and candidate resumes
+job_description = "We are looking for a software engineer with experience in Python, Java, and web development."
+resumes = [
+    "I am a software engineer with strong skills in Python and web development.",
+    "Experienced Java developer with a background in software engineering.",
+    "Web developer proficient in Java and Python programming.",
+]
+
+# Preprocess text
+def preprocess_text(text):
+    # Tokenization
+    tokens = word_tokenize(text.lower())
+    
+    # Remove punctuation and stopwords
+    tokens = [token for token in tokens if token not in string.punctuation and token not in stopwords.words('english')]
+    
+    # Stemming
+    stemmer = PorterStemmer()
+    tokens = [stemmer.stem(token) for token in tokens]
+    
+    return ' '.join(tokens)
+
+# Preprocess job description and resumes
+preprocessed_job_description = preprocess_text(job_description)
+preprocessed_resumes = [preprocess_text(resume) for resume in resumes]
+
+# Create TF-IDF vectors
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform([preprocessed_job_description] + preprocessed_resumes)
+cosine_similarities = cosine_similarity(tfidf_matrix[0], tfidf_matrix[1:]).flatten()
+
+# Find the most suitable candidate
+most_suitable_candidate_index = cosine_similarities.argmax()
+print("Most suitable candidate:")
+print(resumes[most_suitable_candidate_index])
+
+# Print cosine similarity scores
+print("Cosine similarity scores:")
+for i, score in enumerate(cosine_similarities):
+    print(f"Resume {i + 1}: {score:.4f}")
